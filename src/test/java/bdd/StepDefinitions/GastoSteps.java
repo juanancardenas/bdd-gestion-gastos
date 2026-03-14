@@ -2,6 +2,9 @@ package bdd.StepDefinitions;
 
 import andamios.HttpClient;
 import andamios.ServerSupport;
+
+import gastos.service.GastoService;
+
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
@@ -21,8 +24,9 @@ public class GastoSteps {
     private String encargoId;
     private String concepto;
     private String fecha;
-    private String importeBase;
-    private String iva;
+    private double importeBase;
+    private int iva;
+    private double total;
 
     @Before
     public void setUp() {
@@ -32,8 +36,8 @@ public class GastoSteps {
         encargoId = "ENC-001";
         concepto = "Tasas judiciales";
         fecha = "2026-03-09";
-        importeBase = "100.0";
-        iva = "21";
+        importeBase = 100.0;
+        iva = 21;
     }
 
     @After
@@ -47,17 +51,20 @@ public class GastoSteps {
 
     @Given("existe un encargo activo")
     public void existe_un_encargo_activo() {
+        // No quiero probar nada de Encargos en BDD/TDD de Gastos, por lo
+        // que usamos un ID de encargo fijo que permita probar Gastos.
         encargoId = "ENC-001";
+        assertNotNull(encargoId);
     }
 
     @When("el personal registra un gasto completo")
     public void el_personal_registra_un_gasto_completo() throws Exception {
         response = http.postForm("/gastos", buildForm());
+        assertNotNull(response);
     }
 
     @Then("el gasto queda registrado")
     public void el_gasto_queda_registrado() {
-        assertNotNull(response);
         assertEquals(200, response.statusCode());
         assertTrue(response.body().contains("Gasto registrado"));
     }
@@ -72,15 +79,41 @@ public class GastoSteps {
     }
 
     /* ====================================================================
+     * Escenario 2
+     * ====================================================================*/
+
+    @Given("el personal introduce un importe base de {double} euros")
+    public void base(double base) {
+        this.importeBase = base;
+        assertTrue(this.importeBase > 0, "Importe Base debe ser mayor que 0");
+    }
+
+    @And("selecciona un IVA del {int} por ciento")
+    public void iva(int iva) {
+        // En el escenario 7: ver TipoIVASteps se hará más elegantemente
+        this.iva = iva;
+        assertTrue(iva == 21 || iva == 10 || iva == 4 || iva == 0,"IVA no válido: " + iva);
+    }
+
+    @Then("el sistema calcula un total de {int} euros")
+    public void total(double esperado) {
+        // Es lógica de servicio, no lo responde el Servlet
+        GastoService service = new GastoService();
+        total = service.calcularTotal(importeBase, iva);
+        assertEquals(esperado, total);
+    }
+
+    /* ====================================================================
      * Escenario 3
      * ====================================================================*/
 
     @When("el personal registra un gasto con importe base {int}")
-    public void el_personal_registra_un_gasto_con_importe_base(int importe) throws Exception {
-        importeBase = String.valueOf(importe);
+    public void el_personal_registra_un_gasto_con_importe_base(double importe) throws Exception {
+        importeBase = importe;
         response = http.postForm("/gastos", buildForm());
     }
 
+    // Este paso también es parte de escenarios 4, 5 y 6
     @Then("el sistema muestra un mensaje de error")
     public void el_sistema_muestra_un_mensaje_de_error() {
         assertNotNull(response);
@@ -89,6 +122,7 @@ public class GastoSteps {
         assertFalse(response.body().isBlank());
     }
 
+    // Este paso también es parte de escenarios 4, 5 y 6
     @And("el gasto no se guarda")
     public void el_gasto_no_se_guarda() {
         assertNotNull(response);
@@ -105,11 +139,6 @@ public class GastoSteps {
         response = http.postForm("/gastos", buildForm());
     }
 
-    @Then("el sistema impide guardar el gasto")
-    public void el_sistema_impide_guardar_el_gasto() {
-        assertNotNull(response);
-        assertEquals(400, response.statusCode());
-    }
 
     /* ====================================================================
      * Escenario 5
@@ -156,12 +185,16 @@ public class GastoSteps {
         assertEquals("El concepto es obligatorio", response.body());
     }
 
+    /* ====================================================================
+     * Métodos privados y auxiliares, no implementan funcionalidad o steps
+     * ====================================================================*/
+
     private String buildForm() {
         return "encargoId=" + encode(encargoId)
                 + "&concepto=" + encode(concepto)
                 + "&fecha=" + encode(fecha)
-                + "&importeBase=" + encode(importeBase)
-                + "&iva=" + encode(iva);
+                + "&importeBase=" + encode(String.valueOf(importeBase))
+                + "&iva=" + encode(String.valueOf(iva));
     }
 
     private String encode(String value) {

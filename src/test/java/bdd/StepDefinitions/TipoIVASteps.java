@@ -1,41 +1,65 @@
 package bdd.StepDefinitions;
 
-import gastos.domain.TipoIVA;
-import gastos.service.TipoIVAService;
+import andamios.HttpClient;
+import andamios.ServerSupport;
+
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
-import java.util.List;
+import java.io.IOException;
+import java.net.http.HttpResponse;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TipoIVASteps {
 
-    private final TipoIVAService tipoIVAService = new TipoIVAService();
-    private List<TipoIVA> tiposIVA;
+    private HttpClient http;
+    private HttpResponse<String> response;
+
+    @Before
+    public void setUp() {
+        ServerSupport.startIfNeeded();
+        http = new HttpClient();
+    }
+
+    @After
+    public void tearDown() {
+        ServerSupport.stopIfRunning();
+    }
 
     /* ====================================================================
      * Escenario 7
      * ====================================================================*/
 
     @Given("existen tipos de IVA configurados")
-    public void existen_tipos_de_iva_configurados() {
-        tiposIVA = tipoIVAService.obtenerTiposIVADisponibles();
-        assertNotNull(tiposIVA);
-        assertFalse(tiposIVA.isEmpty());
+    public void existen_tipos_de_iva_configurados() throws IOException, InterruptedException {
+        response = http.get("/tipos-iva");
+        assertNotNull(response);
+        assertEquals(200, response.statusCode());
     }
 
     @When("el personal inicia el registro de un gasto")
-    public void el_personal_inicia_el_registro_de_un_gasto() {
-        tiposIVA = tipoIVAService.obtenerTiposIVADisponibles();
+    public void el_personal_inicia_el_registro_de_un_gasto()  {
+        // es una operación pura de UI, acción de usuario
+        assertTrue(true);
     }
 
     @Then("el sistema muestra una lista de tipos de IVA disponibles")
     public void el_sistema_muestra_una_lista_de_tipos_de_iva_disponibles() {
-        assertNotNull(tiposIVA);
-        assertFalse(tiposIVA.isEmpty());
-        assertTrue(tiposIVA.stream().anyMatch(t -> t.getPorcentaje() == 21));
-        assertTrue(tiposIVA.stream().anyMatch(t -> t.getPorcentaje() == 10));
+        // Si fue bien el paso inicial, tenemos los valores del IVA
+        String body = response.body();
+        assertNotNull(body);
+
+        String[] lineas = body.split("\n");
+
+        assertEquals(4, lineas.length);
+
+        assertTrue(body.contains("21|General"));
+        assertTrue(body.contains("10|Reducido"));
+        assertTrue(body.contains("4|Superreducido"));
+        assertTrue(body.contains("0|Exento"));
     }
 }

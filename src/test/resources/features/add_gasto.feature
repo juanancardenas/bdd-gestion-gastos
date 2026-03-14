@@ -19,7 +19,7 @@ Feature: Registrar gasto
       | 100  | 0   | 100   |
 
   # ESCENARIO 3
-  Scenario: Intentar registrar gasto con importe 0
+  Scenario: Rechazar registro de gasto con importe 0
     Given existe un encargo activo
     When el personal registra un gasto con importe base 0
     Then el sistema muestra un mensaje de error
@@ -27,14 +27,14 @@ Feature: Registrar gasto
     And el mensaje indica que el importe base debe ser mayor que 0
 
   # ESCENARIO 4
-  Scenario: Registrar gasto sin encargo
+  Scenario: Rechazar registro de gasto sin encargo
     When el personal intenta registrar un gasto sin encargo
     Then el sistema muestra un mensaje de error
     And el gasto no se guarda
     And el mensaje indica que debe existir un encargo activo
 
   # ESCENARIO 5
-  Scenario: Registrar gasto sin fecha
+  Scenario: Rechazar registro de gasto sin fecha
     Given existe un encargo activo
     When el personal registra un gasto sin fecha
     Then el sistema muestra un mensaje de error
@@ -42,7 +42,7 @@ Feature: Registrar gasto
     And el mensaje indica que la fecha es obligatoria
 
   # ESCENARIO 6
-  Scenario: Registrar gasto sin concepto
+  Scenario: Rechazar registro de gasto sin concepto
     Given existe un encargo activo
     When el personal registra un gasto sin concepto
     Then el sistema muestra un mensaje de error
