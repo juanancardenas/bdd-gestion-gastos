@@ -15,6 +15,10 @@ public class TipoIVASteps {
     private final TipoIVAService tipoIVAService = new TipoIVAService();
     private List<TipoIVA> tiposIVA;
 
+    /* ====================================================================
+     * Escenario 7
+     * ====================================================================*/
+
     @Given("existen tipos de IVA configurados")
     public void existen_tipos_de_iva_configurados() {
         tiposIVA = tipoIVAService.obtenerTiposIVADisponibles();
