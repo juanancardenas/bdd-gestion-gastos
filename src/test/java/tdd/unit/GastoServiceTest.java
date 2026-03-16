@@ -104,15 +104,13 @@ class GastoServiceTest {
 
     @Test
     void deberia_calcular_total_con_iva_10() {
-        GastoService gastoService = new GastoService();
-        double gasto = gastoService.calcularTotal(100.0,10);
+        double gasto = this.gastoService.calcularTotal(100.0,10);
         assertEquals(110.0, gasto);
     }
 
     @Test
     void deberia_calcular_total_con_iva_0() {
-        GastoService gastoService = new GastoService();
-        double gasto = gastoService.calcularTotal(100.0,0);
+        double gasto = this.gastoService.calcularTotal(100.0,0);
         assertEquals(100.0, gasto);
     }
 }
